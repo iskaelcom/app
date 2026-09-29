@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   Modal,
   useColorScheme,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -657,6 +658,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     padding: 0,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+      outlineWidth: 0,
+    } as any),
   },
   filterTabs: {
     gap: 6,

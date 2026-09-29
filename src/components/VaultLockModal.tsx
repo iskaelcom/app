@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface VaultLockModalProps {
@@ -16,7 +16,8 @@ export function VaultLockModal({
   onCancel,
   colors,
   title = 'Buka Catatan Rahasia',
-}: VaultLockModalProps) {
+}: VaultLockModalProps)
+{
   const [pin, setPin] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -142,6 +143,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 4,
     marginBottom: 10,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+      outlineWidth: 0,
+    } as any),
   },
   errorText: {
     fontSize: 12,

@@ -37,7 +37,8 @@ export function NoteEditor({
   onTogglePin,
   onToggleArchive,
   colors,
-}: NoteEditorProps) {
+}: NoteEditorProps)
+{
   const { width } = useWindowDimensions();
   const isWideScreen = width >= 768;
 
@@ -385,6 +386,7 @@ export function NoteEditor({
                 viewMode === 'split' && styles.splitPaneLeft,
                 { borderRightColor: colors.cardBorder },
               ]}
+              contentContainerStyle={styles.paneScrollContent}
               keyboardShouldPersistTaps="handled">
               <TextInput
                 ref={contentInputRef}
@@ -525,6 +527,10 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     padding: 0,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+      outlineWidth: 0,
+    } as any),
   },
   tagsRow: {
     paddingVertical: 8,
@@ -573,6 +579,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     minWidth: 60,
     padding: 0,
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+      outlineWidth: 0,
+    } as any),
   },
   editorArea: {
     flex: 1,
@@ -580,8 +590,10 @@ const styles = StyleSheet.create({
   },
   paneScrollView: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+  },
+  paneScrollContent: {
+    flex: 1,
+    flexGrow: 1,
   },
   splitPaneLeft: {
     borderRightWidth: 1,
@@ -592,10 +604,23 @@ const styles = StyleSheet.create({
   contentInput: {
     fontSize: 16,
     lineHeight: 26,
-    minHeight: 250,
+    flex: 1,
+    height: '100%',
+    minHeight: '100%',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    textAlignVertical: 'top',
+    ...(Platform.OS === 'web' && {
+      outlineStyle: 'none',
+      outlineWidth: 0,
+      resize: 'none',
+    } as any),
   },
   previewContainer: {
-    paddingBottom: 24,
+    flexGrow: 1,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    paddingBottom: 32,
   },
   previewHeader: {
     marginBottom: 10,
