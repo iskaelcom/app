@@ -59,10 +59,22 @@ export function NoteEditor({
     end: 0,
   });
 
+  // Sinkronisasi state jika id catatan berubah
+  useEffect(() =>
+  {
+    setTitle(note.title);
+    setContent(note.content);
+    setTags(note.tags || []);
+    setIsPinned(note.isPinned);
+    setIsLocked(note.isLocked || false);
+  }, [note.id]);
+
   // Debounced auto-save
-  useEffect(() => {
+  useEffect(() =>
+  {
     setSavedStatus('Menyimpan...');
-    const timer = setTimeout(() => {
+    const timer = setTimeout(() =>
+    {
       onSave({
         ...note,
         title,
@@ -78,7 +90,40 @@ export function NoteEditor({
     return () => clearTimeout(timer);
   }, [title, content, tags, isPinned, isLocked]);
 
-  const handleExportMarkdown = () => {
+  const handleManualSave = () =>
+  {
+    onSave({
+      ...note,
+      title,
+      content,
+      tags,
+      isPinned,
+      isLocked,
+      updatedAt: Date.now(),
+    });
+    setSavedStatus('Tersimpan di perangkat');
+    if (!isWideScreen)
+    {
+      onClose();
+    }
+  };
+
+  const handleClose = () =>
+  {
+    onSave({
+      ...note,
+      title,
+      content,
+      tags,
+      isPinned,
+      isLocked,
+      updatedAt: Date.now(),
+    });
+    onClose();
+  };
+
+  const handleExportMarkdown = () =>
+  {
     const md = formatNoteToMarkdown({
       ...note,
       title,
@@ -90,7 +135,8 @@ export function NoteEditor({
     downloadMarkdownFile(title || 'catatan', md);
   };
 
-  const handleInsertFormat = (type: WhatsAppFormatType) => {
+  const handleInsertFormat = (type: WhatsAppFormatType) =>
+  {
     const { text, newCursor } = insertWhatsAppToken(
       content,
       type,
@@ -99,30 +145,37 @@ export function NoteEditor({
     );
     setContent(text);
     // Switch to edit if user is in preview mode
-    if (viewMode === 'preview') {
+    if (viewMode === 'preview')
+    {
       setViewMode('edit');
     }
   };
 
-  const handleAddTag = () => {
+  const handleAddTag = () =>
+  {
     const cleaned = newTagInput.trim().replace(/^#/, '');
-    if (cleaned && !tags.includes(cleaned)) {
+    if (cleaned && !tags.includes(cleaned))
+    {
       setTags([...tags, cleaned]);
     }
     setNewTagInput('');
     setShowTagInput(false);
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
+  const handleRemoveTag = (tagToRemove: string) =>
+  {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  const handleToggleChecklistFromPreview = (lineIndex: number, newChecked: boolean) => {
+  const handleToggleChecklistFromPreview = (lineIndex: number, newChecked: boolean) =>
+  {
     const lines = content.split('\n');
-    if (lineIndex >= 0 && lineIndex < lines.length) {
+    if (lineIndex >= 0 && lineIndex < lines.length)
+    {
       const line = lines[lineIndex];
       const match = line.match(/^(\s*)\[([ xX])\]\s*(.*)$/);
-      if (match) {
+      if (match)
+      {
         lines[lineIndex] = `${match[1]}[${newChecked ? 'x' : ' '}] ${match[3]}`;
         setContent(lines.join('\n'));
       }
@@ -138,7 +191,7 @@ export function NoteEditor({
       style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top Bar Navigator */}
       <View style={[styles.topBar, { borderBottomColor: colors.cardBorder }]}>
-        <Pressable onPress={onClose} style={styles.backBtn} hitSlop={10}>
+        <Pressable onPress={handleClose} style={styles.backBtn} hitSlop={10}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
           <Text style={[styles.backText, { color: colors.text }]}>Catatan</Text>
         </Pressable>
@@ -208,8 +261,14 @@ export function NoteEditor({
           )}
         </View>
 
-        {/* Action icons: Export MD, Pin, Lock, Archive, Delete */}
+        {/* Action icons: Save, Export MD, Pin, Lock, Archive, Delete */}
         <View style={styles.topActions}>
+          <Pressable
+            onPress={handleManualSave}
+            style={[styles.saveBtn, { backgroundColor: colors.primary }]}>
+            <Ionicons name="checkmark" size={15} color="#FFFFFF" />
+            <Text style={styles.saveBtnText}>Simpan</Text>
+          </Pressable>
           <Pressable
             onPress={handleExportMarkdown}
             hitSlop={8}
@@ -436,7 +495,20 @@ const styles = StyleSheet.create({
   topActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+  },
+  saveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
   },
   actionIconBtn: {
     padding: 4,

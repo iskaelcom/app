@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -42,42 +42,56 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState<NoteFilter>('all');
 
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const selectedNoteRef = useRef<Note | null>(selectedNote);
+  selectedNoteRef.current = selectedNote;
+
   const [isEditorModalOpen, setIsEditorModalOpen] = useState(false);
   const [lockedNotePending, setLockedNotePending] = useState<Note | null>(null);
 
   // Load notes on mount & subscribe to storage updates
-  useEffect(() => {
+  useEffect(() =>
+  {
     let isMounted = true;
-    getNotes().then((loaded) => {
-      if (isMounted) {
+    getNotes().then((loaded) =>
+    {
+      if (isMounted)
+      {
         setNotes(loaded);
-        if (isWideScreen && loaded.length > 0 && !selectedNote) {
+        if (isWideScreen && loaded.length > 0 && !selectedNoteRef.current)
+        {
           setSelectedNote(loaded[0]);
         }
       }
     });
 
-    const unsubscribe = subscribeNotes((updatedNotes) => {
+    const unsubscribe = subscribeNotes((updatedNotes) =>
+    {
       setNotes(updatedNotes);
-      if (selectedNote) {
-        const refreshed = updatedNotes.find((n) => n.id === selectedNote.id);
-        if (refreshed) {
+      if (selectedNoteRef.current)
+      {
+        const refreshed = updatedNotes.find((n) => n.id === selectedNoteRef.current?.id);
+        if (refreshed)
+        {
           setSelectedNote(refreshed);
         }
       }
     });
 
-    return () => {
+    return () =>
+    {
       isMounted = false;
       unsubscribe();
     };
   }, [isWideScreen]);
 
   // Ekstrak semua tag unik dari catatan aktif
-  const allTags = useMemo(() => {
+  const allTags = useMemo(() =>
+  {
     const set = new Set<string>();
-    notes.forEach((n) => {
-      if (!n.isTrash) {
+    notes.forEach((n) =>
+    {
+      if (!n.isTrash)
+      {
         n.tags?.forEach((t) => set.add(t));
       }
     });
@@ -85,12 +99,17 @@ export default function HomeScreen() {
   }, [notes]);
 
   // Filter & Search
-  const filteredNotes = useMemo(() => {
-    return notes.filter((n) => {
+  const filteredNotes = useMemo(() =>
+  {
+    return notes.filter((n) =>
+    {
       // Filter status
-      if (activeFilter === 'trash') {
+      if (activeFilter === 'trash')
+      {
         if (!n.isTrash) return false;
-      } else {
+      }
+      else
+      {
         if (n.isTrash) return false;
         if (activeFilter === 'archived' && !n.isArchived) return false;
         if (activeFilter === 'pinned' && (!n.isPinned || n.isArchived)) return false;
@@ -98,12 +117,14 @@ export default function HomeScreen() {
       }
 
       // Filter tag
-      if (selectedTag && !n.tags?.includes(selectedTag)) {
+      if (selectedTag && !n.tags?.includes(selectedTag))
+      {
         return false;
       }
 
       // Filter query search (judul, isi, tag)
-      if (searchQuery.trim()) {
+      if (searchQuery.trim())
+      {
         const q = searchQuery.toLowerCase();
         const matchTitle = n.title.toLowerCase().includes(q);
         const matchContent = n.content.toLowerCase().includes(q);
@@ -116,17 +137,20 @@ export default function HomeScreen() {
   }, [notes, activeFilter, selectedTag, searchQuery]);
 
   // Pisahkan pinned dan other notes pada view 'all'
-  const pinnedNotes = useMemo(() => {
+  const pinnedNotes = useMemo(() =>
+  {
     if (activeFilter !== 'all') return [];
     return filteredNotes.filter((n) => n.isPinned);
   }, [filteredNotes, activeFilter]);
 
-  const otherNotes = useMemo(() => {
+  const otherNotes = useMemo(() =>
+  {
     if (activeFilter !== 'all') return filteredNotes;
     return filteredNotes.filter((n) => !n.isPinned);
   }, [filteredNotes, activeFilter]);
 
-  const handleCreateNewNote = () => {
+  const handleCreateNewNote = async () =>
+  {
     const newNote: Note = {
       id: 'note-' + Date.now(),
       title: '',
@@ -140,65 +164,94 @@ export default function HomeScreen() {
       updatedAt: Date.now(),
       syncStatus: 'synced',
     };
+
+    // Langsung simpan ke penyimpanan lokal agar segera terdaftar di database dan UI
+    const updatedNotes = await saveNote(newNote);
+    setNotes(updatedNotes);
     setSelectedNote(newNote);
     setIsEditorModalOpen(true);
   };
 
-  const handleSelectNote = (note: Note) => {
-    if (note.isLocked) {
+  const handleSelectNote = (note: Note) =>
+  {
+    if (note.isLocked)
+    {
       setLockedNotePending(note);
-    } else {
+    }
+    else
+    {
       setSelectedNote(note);
-      if (!isWideScreen) {
+      if (!isWideScreen)
+      {
         setIsEditorModalOpen(true);
       }
     }
   };
 
-  const handleUnlockSuccess = () => {
-    if (lockedNotePending) {
+  const handleUnlockSuccess = () =>
+  {
+    if (lockedNotePending)
+    {
       setSelectedNote(lockedNotePending);
-      if (!isWideScreen) {
+      if (!isWideScreen)
+      {
         setIsEditorModalOpen(true);
       }
       setLockedNotePending(null);
     }
   };
 
-  const handleSaveNote = async (updated: Note) => {
-    await saveNote(updated);
+  const handleSaveNote = async (updated: Note) =>
+  {
+    const updatedNotes = await saveNote(updated);
+    setNotes(updatedNotes);
   };
 
-  const handleDeleteNote = async (id: string) => {
+  const handleDeleteNote = async (id: string) =>
+  {
     const target = notes.find((n) => n.id === id);
     const permanent = target?.isTrash === true;
-    await deleteNote(id, permanent);
-    if (selectedNote?.id === id) {
+    const updatedNotes = await deleteNote(id, permanent);
+    setNotes(updatedNotes);
+    if (selectedNote?.id === id)
+    {
       setSelectedNote(null);
       setIsEditorModalOpen(false);
     }
   };
 
-  const handleRestoreNote = async (id: string) => {
-    await restoreNote(id);
+  const handleRestoreNote = async (id: string) =>
+  {
+    const updatedNotes = await restoreNote(id);
+    setNotes(updatedNotes);
   };
 
-  const handleTogglePin = async (id: string) => {
-    await togglePinNote(id);
+  const handleTogglePin = async (id: string) =>
+  {
+    const updatedNotes = await togglePinNote(id);
+    setNotes(updatedNotes);
   };
 
-  const handleToggleArchive = async (id: string) => {
-    await toggleArchiveNote(id);
+  const handleToggleArchive = async (id: string) =>
+  {
+    const updatedNotes = await toggleArchiveNote(id);
+    setNotes(updatedNotes);
   };
 
-  const handleImportMarkdown = async () => {
+  const handleImportMarkdown = async () =>
+  {
     const imported = await triggerMarkdownImport();
-    if (imported.length > 0) {
+    if (imported.length > 0)
+    {
       const all = await getNotes();
       setNotes(all);
-      if (imported[0]) {
+      if (imported[0])
+      {
         setSelectedNote(imported[0]);
-        if (!isWideScreen) setIsEditorModalOpen(true);
+        if (!isWideScreen)
+        {
+          setIsEditorModalOpen(true);
+        }
       }
     }
   };
@@ -220,6 +273,17 @@ export default function HomeScreen() {
 
               <View style={styles.headerRightActions}>
                 <Pressable
+                  onPress={handleCreateNewNote}
+                  style={({ pressed }) => [
+                    styles.newNoteHeaderBtn,
+                    { backgroundColor: colors.primary },
+                    pressed && { opacity: 0.8 },
+                  ]}>
+                  <Ionicons name="add" size={15} color="#FFFFFF" />
+                  <Text style={styles.newNoteHeaderBtnText}>Baru</Text>
+                </Pressable>
+
+                <Pressable
                   onPress={handleImportMarkdown}
                   style={({ pressed }) => [
                     styles.importBtn,
@@ -227,7 +291,7 @@ export default function HomeScreen() {
                     pressed && { opacity: 0.7 },
                   ]}>
                   <Ionicons name="cloud-upload-outline" size={14} color={colors.primary} />
-                  <Text style={[styles.importBtnText, { color: colors.text }]}>Impor .md</Text>
+                  <Text style={[styles.importBtnText, { color: colors.text }]}>Impor</Text>
                 </Pressable>
                 <SyncStatusBadge colors={colors} />
               </View>
@@ -474,6 +538,7 @@ export default function HomeScreen() {
           {selectedNote && (
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
               <NoteEditor
+                key={selectedNote.id}
                 note={selectedNote}
                 onSave={handleSaveNote}
                 onClose={() => setIsEditorModalOpen(false)}
@@ -510,6 +575,7 @@ const styles = StyleSheet.create({
   listPane: {
     flex: 1,
     height: '100%',
+    position: 'relative',
   },
   listPaneWide: {
     maxWidth: 420,
@@ -534,6 +600,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  newNoteHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  newNoteHeaderBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   importBtn: {
     flexDirection: 'row',
@@ -666,7 +745,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 24,
+    bottom: 28,
     right: 20,
     width: 56,
     height: 56,
@@ -677,7 +756,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 12,
+    zIndex: 99999,
   },
   noSelectedPane: {
     flex: 1,

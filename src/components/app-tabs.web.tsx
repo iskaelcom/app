@@ -66,13 +66,17 @@ export function TabButton({
   );
 }
 
-export function CustomTabList(props: TabListProps) {
+export function CustomTabList(props: TabListProps)
+{
   const scheme = useColorScheme();
   const colors = Colors[scheme === 'light' ? 'light' : 'dark'];
 
   return (
-    <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={[styles.innerContainer, { borderColor: colors.cardBorder, borderWidth: 1 }]}>
+    <View {...props} style={styles.tabListContainer} pointerEvents="box-none">
+      <ThemedView
+        type="backgroundElement"
+        style={[styles.innerContainer, { borderColor: colors.cardBorder, borderWidth: 1 }]}
+        pointerEvents="auto">
         <View style={styles.brandRow}>
           <Ionicons name="lock-closed" size={16} color={colors.primary} />
           <ThemedText type="smallBold" style={[styles.brandText, { color: colors.text }]}>
@@ -95,6 +99,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'row',
+    pointerEvents: 'box-none',
   },
   innerContainer: {
     paddingVertical: Spacing.two,
