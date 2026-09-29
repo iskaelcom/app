@@ -167,7 +167,7 @@ export function WhatsAppViewer({
                 {renderInlineFormattedText(
                   itemText,
                   {
-                    color: isChecked ? 'rgba(255,255,255,0.45)' : textColor,
+                    color: textColor,
                     fontSize: 15,
                     lineHeight: 22,
                   },
