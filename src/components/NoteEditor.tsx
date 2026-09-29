@@ -16,6 +16,7 @@ import {
   WhatsAppViewer,
   insertWhatsAppToken,
 } from '@/utils/whatsappFormatter';
+import { formatNoteToMarkdown, downloadMarkdownFile } from '@/utils/markdownExporter';
 import { WhatsAppToolbar } from './WhatsAppToolbar';
 
 interface NoteEditorProps {
@@ -76,6 +77,18 @@ export function NoteEditor({
 
     return () => clearTimeout(timer);
   }, [title, content, tags, isPinned, isLocked]);
+
+  const handleExportMarkdown = () => {
+    const md = formatNoteToMarkdown({
+      ...note,
+      title,
+      content,
+      tags,
+      isPinned,
+      isLocked,
+    });
+    downloadMarkdownFile(title || 'catatan', md);
+  };
 
   const handleInsertFormat = (type: WhatsAppFormatType) => {
     const { text, newCursor } = insertWhatsAppToken(
@@ -195,8 +208,19 @@ export function NoteEditor({
           )}
         </View>
 
-        {/* Action icons: Pin, Lock, Archive, Delete */}
+        {/* Action icons: Export MD, Pin, Lock, Archive, Delete */}
         <View style={styles.topActions}>
+          <Pressable
+            onPress={handleExportMarkdown}
+            hitSlop={8}
+            style={styles.actionIconBtn}>
+            <Ionicons
+              name="download-outline"
+              size={20}
+              color={colors.primary}
+            />
+          </Pressable>
+
           <Pressable
             onPress={() => setIsPinned(!isPinned)}
             hitSlop={8}

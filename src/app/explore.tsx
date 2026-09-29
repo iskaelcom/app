@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/constants/theme';
 import { getSyncState, simulateCloudSync, SyncState } from '@/services/firebase';
 import { getNotes } from '@/services/storage';
+import { exportAllNotesToMarkdownBundle, triggerMarkdownImport } from '@/utils/markdownExporter';
 
 export default function ExploreScreen() {
   const scheme = useColorScheme();
@@ -32,6 +33,24 @@ export default function ExploreScreen() {
     await simulateCloudSync();
     setSyncState(getSyncState());
     setIsSyncing(false);
+  };
+
+  const handleExportAllMarkdown = async () => {
+    const notes = await getNotes();
+    exportAllNotesToMarkdownBundle(notes);
+  };
+
+  const handleImportMarkdown = async () => {
+    const imported = await triggerMarkdownImport();
+    if (imported.length > 0) {
+      const refreshed = await getNotes();
+      setTotalNotes(refreshed.length);
+      if (typeof window !== 'undefined' && window.alert) {
+        window.alert(`Berhasil mengimpor ${imported.length} file catatan Markdown!`);
+      } else {
+        Alert.alert('Impor Berhasil', `Berhasil mengimpor ${imported.length} catatan.`);
+      }
+    }
   };
 
   const handleExportJSON = async () => {
@@ -180,8 +199,43 @@ export default function ExploreScreen() {
             onPress={handleExportJSON}
             style={[styles.outlineBtn, { borderColor: colors.cardBorder }]}>
             <Ionicons name="download-outline" size={17} color={colors.text} />
-            <Text style={[styles.outlineBtnText, { color: colors.text }]}>Ekspor & Backup Cadangan</Text>
+            <Text style={[styles.outlineBtnText, { color: colors.text }]}>Ekspor Backup JSON</Text>
           </Pressable>
+        </View>
+
+        {/* Card 4: Data Portability (Markdown .md) */}
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.iconWrap, { backgroundColor: 'rgba(59, 130, 246, 0.15)' }]}>
+              <Ionicons name="document-text" size={20} color="#3B82F6" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Portabilitas Data (.md)</Text>
+              <Text style={[styles.cardSub, { color: colors.textSecondary }]}>
+                Buka catatan di Obsidian, Notion, VS Code, atau aplikasi lain
+              </Text>
+            </View>
+          </View>
+
+          <Text style={[styles.securityDesc, { color: colors.textSecondary }]}>
+            Semua catatan Anda ditulis dalam format Markdown standar dengan YAML Frontmatter. Anda bebas mengekspor atau mengimpor file .md kapan saja tanpa terikat (*no vendor lock-in*).
+          </Text>
+
+          <View style={{ gap: 8 }}>
+            <Pressable
+              onPress={handleExportAllMarkdown}
+              style={[styles.primaryBtn, { backgroundColor: '#3B82F6' }]}>
+              <Ionicons name="download" size={17} color="#FFFFFF" />
+              <Text style={styles.primaryBtnText}>Ekspor Semua Catatan (.md Bundle)</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleImportMarkdown}
+              style={[styles.outlineBtn, { borderColor: colors.cardBorder }]}>
+              <Ionicons name="cloud-upload-outline" size={17} color={colors.text} />
+              <Text style={[styles.outlineBtnText, { color: colors.text }]}>Impor File Markdown (.md)</Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={{ height: 100 }} />

@@ -28,6 +28,7 @@ import { NoteCard } from '@/components/NoteCard';
 import { NoteEditor } from '@/components/NoteEditor';
 import { VaultLockModal } from '@/components/VaultLockModal';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
+import { triggerMarkdownImport } from '@/utils/markdownExporter';
 
 export default function HomeScreen() {
   const scheme = useColorScheme();
@@ -190,6 +191,18 @@ export default function HomeScreen() {
     await toggleArchiveNote(id);
   };
 
+  const handleImportMarkdown = async () => {
+    const imported = await triggerMarkdownImport();
+    if (imported.length > 0) {
+      const all = await getNotes();
+      setNotes(all);
+      if (imported[0]) {
+        setSelectedNote(imported[0]);
+        if (!isWideScreen) setIsEditorModalOpen(true);
+      }
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.layoutWrapper}>
@@ -205,7 +218,19 @@ export default function HomeScreen() {
                 <Text style={[styles.appTitle, { color: colors.text }]}>Private Note</Text>
               </View>
 
-              <SyncStatusBadge colors={colors} />
+              <View style={styles.headerRightActions}>
+                <Pressable
+                  onPress={handleImportMarkdown}
+                  style={({ pressed }) => [
+                    styles.importBtn,
+                    { backgroundColor: colors.backgroundElement, borderColor: colors.cardBorder },
+                    pressed && { opacity: 0.7 },
+                  ]}>
+                  <Ionicons name="cloud-upload-outline" size={14} color={colors.primary} />
+                  <Text style={[styles.importBtnText, { color: colors.text }]}>Impor .md</Text>
+                </Pressable>
+                <SyncStatusBadge colors={colors} />
+              </View>
             </View>
 
             {/* Search Input */}
@@ -504,6 +529,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  importBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   appBrand: {
     flexDirection: 'row',
